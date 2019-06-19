@@ -9,12 +9,12 @@ import java.util.List;
 @ServerEndpoint("/actions")
 public class webSocketServer{
 
-    private List<client> clients = new ArrayList<client>();
+    private static List<client> clients = new ArrayList<client>();
 
     @OnOpen
     public void handleOpen(Session session)
     {
-
+        System.out.println("Socket connected:"+session.getId());
     }
 
     @OnMessage

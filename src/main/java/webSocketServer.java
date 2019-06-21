@@ -14,18 +14,14 @@ public class webSocketServer{
     @OnOpen
     public void handleOpen(Session session)
     {
+        connectFromClient(session);
         System.out.println("Socket connected:"+session.getId());
     }
 
     @OnMessage
     public void handleMessage(Session session, String message)
     {
-        if(message.contains("connect"))
-            connectFromClient(session);
-        else
-            broadcastMessageToClients(message);
-
-
+        broadcastMessageToClients(message);
     }
 
     public void connectFromClient(Session session)

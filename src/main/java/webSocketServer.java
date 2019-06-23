@@ -1,3 +1,6 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
@@ -15,13 +18,24 @@ public class webSocketServer{
     public void handleOpen(Session session)
     {
         connectFromClient(session);
+        sendListOfClients(session);
         System.out.println("Socket connected:"+session.getId());
     }
 
     @OnMessage
     public void handleMessage(Session session, String message)
     {
-        broadcastMessageToClients(message);
+        if(message.split(":")[0].equals("setNickName"))
+        {
+            for(client Client:clients) {
+                if (Client.getSession().equals(session))
+                    Client.setNickName(message.split(":")[1]);
+
+                sendListOfClientsToAll();
+            }
+        }
+        else
+            broadcastMessageToClients(message);
     }
 
     public void connectFromClient(Session session)
@@ -41,5 +55,49 @@ public class webSocketServer{
         }
     }
 
+    public void sendListOfClients(Session session)
+    {
+        JSONArray activeClients = createArrayOfActiveClients();
+
+        if(!activeClients.isEmpty())
+            try {
+            System.out.println(activeClients.toJSONString());
+                session.getBasicRemote().sendText(activeClients.toJSONString());
+            }catch(Exception e){e.printStackTrace();}
+
+        System.out.println(activeClients);
+    }
+
+    public void sendListOfClientsToAll()
+    {
+        JSONArray activeClients = createArrayOfActiveClients();
+
+        if(!activeClients.isEmpty())
+            for(client Client:clients) {
+                try {
+                    System.out.println(activeClients.toJSONString());
+                    Client.getSession().getAsyncRemote().sendText(activeClients.toJSONString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        System.out.println(activeClients);
+    }
+
+    public JSONArray createArrayOfActiveClients()
+    {
+        JSONArray arrayOfClients = new JSONArray();
+        for(client Client:clients)
+        {
+            if(Client.getNickName()!=null) {
+                JSONObject clientJSON = new JSONObject();
+                clientJSON.put("sessionId", Client.getSession().getId());
+                clientJSON.put("nickName", Client.getNickName());
+                arrayOfClients.add(clientJSON);
+            }
+        }
+
+        return arrayOfClients;
+    }
 
 }

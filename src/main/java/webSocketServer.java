@@ -23,9 +23,9 @@ public class webSocketServer{
     }
 
     @OnMessage
-    public void handleMessage(Session session, String message)
+    public void handleMessage(Session session, message Message)
     {
-        if(message.split(":")[0].equals("setNickName"))
+        /*if(message.split(":")[0].equals("setNickName"))
         {
             for(client Client:clients) {
                 if (Client.getSession().equals(session))
@@ -35,7 +35,7 @@ public class webSocketServer{
             }
         }
         else
-            broadcastMessageToClients(message);
+            broadcastMessageToClients(message);*/
     }
 
     public void connectFromClient(Session session)

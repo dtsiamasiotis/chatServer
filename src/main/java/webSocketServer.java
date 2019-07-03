@@ -17,7 +17,11 @@ public class webSocketServer{
     @OnOpen
     public void handleOpen(Session session)
     {
-        connectFromClient(session);
+        boolean clientExists = checkIfClientExists(session);
+
+        if(!clientExists)
+            connectFromClient(session);
+
         sendListOfClients(session);
         System.out.println("Socket connected:"+session.getId());
     }
@@ -124,6 +128,20 @@ public class webSocketServer{
         }
 
         return arrayOfClients;
+    }
+
+    public boolean checkIfClientExists(Session session)
+    {
+        boolean found = false;
+
+        for(client Client:clients)
+        {
+            if(Client.getSession().getId()==session.getId())
+                found = true;
+
+        }
+
+        return found;
     }
 
 }

@@ -3,7 +3,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class message {
+public class Message {
     private String sender;
     private String destination;
     private String content;

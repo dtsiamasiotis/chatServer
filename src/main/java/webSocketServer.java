@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@ServerEndpoint("/actions")
+@ServerEndpoint(value="/actions",decoders = messageDecoder.class,encoders = messageEncoder.class)
 public class webSocketServer{
 
     private static List<client> clients = new ArrayList<client>();
@@ -23,19 +23,28 @@ public class webSocketServer{
     }
 
     @OnMessage
-    public void handleMessage(Session session, message Message)
+    public void handleMessage(Session session, Message message)
     {
-        /*if(message.split(":")[0].equals("setNickName"))
+       for(client Client:clients)
+           if(Client.getSession().getId()==session.getId())
+           {
+               message.setSender(Client.getNickName());
+           }
+
+        String operationToExecute = message.getOperation();
+
+        if(operationToExecute.equals("setNickname"))
         {
             for(client Client:clients) {
                 if (Client.getSession().equals(session))
-                    Client.setNickName(message.split(":")[1]);
+                    Client.setNickName(message.getContent());
 
-                sendListOfClientsToAll();
+
             }
+            sendListOfClientsToAll();
         }
-        else
-            broadcastMessageToClients(message);*/
+        else if(operationToExecute.equals("sendMessage"))
+            broadcastMessageToClients(message);
     }
 
     public void connectFromClient(Session session)
@@ -45,13 +54,24 @@ public class webSocketServer{
         clients.add(Client);
     }
 
-    public void broadcastMessageToClients(String message)
+    public void broadcastMessageToClients(Message message)
     {
-        for(client Client:clients)
-        {
-            Session session = Client.getSession();
-            if(session!=null && session.isOpen())
-                session.getAsyncRemote().sendText(message);
+        String destination = message.getDestination();
+        if(destination.equals("Main")) {
+            for (client Client : clients) {
+                Session session = Client.getSession();
+                if (session != null && session.isOpen())
+                    session.getAsyncRemote().sendObject(message);
+            }
+        }
+        else{
+            for (client Client : clients) {
+                if(Client.getNickName().equals(destination)) {
+                    Session session = Client.getSession();
+                    if (session != null && session.isOpen())
+                        session.getAsyncRemote().sendObject(message);
+                }
+            }
         }
     }
 
@@ -62,7 +82,10 @@ public class webSocketServer{
         if(!activeClients.isEmpty())
             try {
             System.out.println(activeClients.toJSONString());
-                session.getBasicRemote().sendText(activeClients.toJSONString());
+                Message Message = new Message();
+                Message.setContent(activeClients.toJSONString());
+                Message.setOperation("listOfClients");
+                session.getBasicRemote().sendObject(Message);
             }catch(Exception e){e.printStackTrace();}
 
         System.out.println(activeClients);
@@ -76,7 +99,10 @@ public class webSocketServer{
             for(client Client:clients) {
                 try {
                     System.out.println(activeClients.toJSONString());
-                    Client.getSession().getAsyncRemote().sendText(activeClients.toJSONString());
+                    Message Message = new Message();
+                    Message.setContent(activeClients.toJSONString());
+                    Message.setOperation("listOfClients");
+                    Client.getSession().getAsyncRemote().sendObject(Message);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

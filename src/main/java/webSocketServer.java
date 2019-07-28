@@ -6,22 +6,18 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 
 @ServerEndpoint(value="/actions",decoders = messageDecoder.class,encoders = messageEncoder.class)
 public class webSocketServer{
 
-    private static List<client> clients = new ArrayList<client>();
+    private static Collection<client> clients = new ArrayList<client>();
 
     @OnOpen
     public void handleOpen(Session session)
     {
-        boolean clientExists = checkIfClientExists(session);
-
-        if(!clientExists)
-            connectFromClient(session);
-
         sendListOfClients(session);
         System.out.println("Socket connected:"+session.getId());
     }
@@ -37,24 +33,44 @@ public class webSocketServer{
 
         String operationToExecute = message.getOperation();
 
-        if(operationToExecute.equals("setNickname"))
+        if(operationToExecute.equals("registerClient"))
         {
+            //boolean clientExists = checkIfClientExists(session);
+
+           // if(!clientExists)
+             //   connectFromClient(session);
+
             for(client Client:clients) {
-                if (Client.getSession().equals(session))
-                    Client.setNickName(message.getContent());
+                if (Client.getNickName().equals(message.getContent())) {
+                    Message Message = new Message();
+                    Message.setContent("nickname_taken");
+                    Message.setOperation("registrationAnswer");
+                    session.getAsyncRemote().sendObject(Message);
 
-
+                    return;
+                }
             }
+
+
+            Message Message = new Message();
+            Message.setContent("success");
+            Message.setOperation("registrationAnswer");
+            session.getAsyncRemote().sendObject(Message);
+
+            connectFromClient(session,message);
             sendListOfClientsToAll();
         }
         else if(operationToExecute.equals("sendMessage"))
             broadcastMessageToClients(message);
+        else if(operationToExecute.equals("removeClient"))
+            removeClient(session);
     }
 
-    public void connectFromClient(Session session)
+    public void connectFromClient(Session session,Message message)
     {
         client Client = new client();
         Client.setSession(session);
+        Client.setNickName(message.getContent());
         clients.add(Client);
     }
 
@@ -142,6 +158,16 @@ public class webSocketServer{
         }
 
         return found;
+    }
+
+    public void removeClient(Session session)
+    {
+        clients.removeIf(e -> e.getSession().getId() == session.getId());
+      /*  for(client Client:clients)
+        {
+            if(Client.getSession().getId()==session.getId())
+                clients.remove(Client);
+        }*/
     }
 
 }

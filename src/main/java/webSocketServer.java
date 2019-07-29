@@ -42,20 +42,20 @@ public class webSocketServer{
 
             for(client Client:clients) {
                 if (Client.getNickName().equals(message.getContent())) {
-                    Message Message = new Message();
-                    Message.setContent("nickname_taken");
-                    Message.setOperation("registrationAnswer");
-                    session.getAsyncRemote().sendObject(Message);
+                    Message responseMessage = new Message();
+                    responseMessage.setContent("nickname_taken");
+                    responseMessage.setOperation("registrationAnswer");
+                    session.getAsyncRemote().sendObject(responseMessage);
 
                     return;
                 }
             }
 
 
-            Message Message = new Message();
-            Message.setContent("success");
-            Message.setOperation("registrationAnswer");
-            session.getAsyncRemote().sendObject(Message);
+            Message responseMessage = new Message();
+            responseMessage.setContent("success");
+            responseMessage.setOperation("registrationAnswer");
+            session.getAsyncRemote().sendObject(responseMessage);
 
             connectFromClient(session,message);
             sendListOfClientsToAll();
@@ -163,11 +163,6 @@ public class webSocketServer{
     public void removeClient(Session session)
     {
         clients.removeIf(e -> e.getSession().getId() == session.getId());
-      /*  for(client Client:clients)
-        {
-            if(Client.getSession().getId()==session.getId())
-                clients.remove(Client);
-        }*/
     }
 
 }
